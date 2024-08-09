@@ -1,11 +1,10 @@
-// src/app.ts
-
 import express, { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 import userRoutes from "./routes/users";
 import cardRoutes from "./routes/cards";
+import { errorHandler } from "./middleware/error";
 
 dotenv.config();
 
@@ -27,7 +26,7 @@ app.use(express.json());
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.user = {
-    _id: "66b53268e87d9dac854633ac",
+    _id: new mongoose.Types.ObjectId("66b53268e87d9dac854633ac"),
   };
 
   next();
@@ -35,6 +34,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use("/", userRoutes);
 app.use("/", cardRoutes);
+
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: "Запрашиваемый ресурс не найден" });
+});
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
