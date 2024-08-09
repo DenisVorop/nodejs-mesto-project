@@ -1,8 +1,11 @@
 // src/app.ts
 
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+
+import userRoutes from "./routes/users";
+import cardRoutes from "./routes/cards";
 
 dotenv.config();
 
@@ -20,9 +23,18 @@ mongoose
     console.error("Error connecting to MongoDB:", error);
   });
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript with Express and MongoDB!");
+app.use(express.json());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  req.user = {
+    _id: "66b53268e87d9dac854633ac",
+  };
+
+  next();
 });
+
+app.use("/", userRoutes);
+app.use("/", cardRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
