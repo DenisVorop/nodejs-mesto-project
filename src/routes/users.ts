@@ -6,7 +6,7 @@ import {
   updateAvatar,
   getCurrentUser,
 } from "../controllers/users";
-import auth from "middleware/auth";
+import auth from "../middleware/auth";
 
 const router = Router();
 

@@ -6,7 +6,7 @@ import {
   likeCard,
   dislikeCard,
 } from "../controllers/cards";
-import auth from "middleware/auth";
+import auth from "../middleware/auth";
 
 const router = Router();
 
