@@ -9,6 +9,35 @@ dotenv.config();
 
 const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
 
+export const getCurrentUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      res.status(401).json({ message: "Необходима авторизация" });
+      return;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "Пользователь не найден" });
+      return;
+    }
+
+    res.status(200).json(user);
+  } catch (err: unknown) {
+    if (err instanceof mongoose.Error.CastError) {
+      res.status(400).json({ message: "Некорректный _id пользователя" });
+    } else {
+      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    }
+  }
+};
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
