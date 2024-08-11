@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -44,16 +45,30 @@ export const createUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, about, avatar } = req.body;
+    const { name, about, avatar, email, password } = req.body;
 
-    const newUser = await User.create({ name, about, avatar });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hashedPassword,
+    });
     res.status(201).json(newUser);
-  } catch (err) {
+  } catch (err: any) {
+    if (err.code === 11000) {
+      res
+        .status(409)
+        .json({ message: "Пользователь с таким email уже существует" });
+      return;
+    }
     if (err instanceof mongoose.Error.ValidationError) {
       res.status(400).json({ message: "Ошибка валидации", error: err.message });
-    } else {
-      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+      return;
     }
+    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
   }
 };
 
