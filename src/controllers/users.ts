@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import User from "../models/User";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
@@ -11,7 +11,8 @@ const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
 
 export const getCurrentUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const userId = req.user?._id;
@@ -33,12 +34,16 @@ export const getCurrentUser = async (
     if (err instanceof mongoose.Error.CastError) {
       res.status(400).json({ message: "Некорректный _id пользователя" });
     } else {
-      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+      next(err);
     }
   }
 };
 
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -72,22 +77,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       })
       .json({ message: "Аутентификация успешна" });
   } catch (err: unknown) {
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const users = await User.find({});
     res.status(200).json(users);
   } catch (err) {
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
 export const getUserById = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const userId = req.params.userId;
@@ -108,14 +118,15 @@ export const getUserById = async (
     if (err instanceof mongoose.Error.CastError) {
       res.status(400).json({ message: "Некорректный идентификатор" });
     } else {
-      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+      next(err);
     }
   }
 };
 
 export const createUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { name, about, avatar, email, password } = req.body;
@@ -131,23 +142,14 @@ export const createUser = async (
     });
     res.status(201).json(newUser);
   } catch (err: any) {
-    if (err.code === 11000) {
-      res
-        .status(409)
-        .json({ message: "Пользователь с таким email уже существует" });
-      return;
-    }
-    if (err instanceof mongoose.Error.ValidationError) {
-      res.status(400).json({ message: "Ошибка валидации", error: err.message });
-      return;
-    }
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
 export const updateProfile = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { name, about } = req.body;
@@ -165,17 +167,14 @@ export const updateProfile = async (
 
     res.status(200).json(user);
   } catch (err) {
-    if (err instanceof mongoose.Error.ValidationError) {
-      res.status(400).json({ message: "Ошибка валидации", error: err.message });
-    } else {
-      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
-    }
+    next(err);
   }
 };
 
 export const updateAvatar = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { avatar } = req.body;
@@ -193,10 +192,6 @@ export const updateAvatar = async (
 
     res.status(200).json(user);
   } catch (err) {
-    if (err instanceof mongoose.Error.ValidationError) {
-      res.status(400).json({ message: "Ошибка валидации", error: err.message });
-    } else {
-      res.status(500).json({ message: "Непредвиденная ошибка сервера" });
-    }
+    next(err);
   }
 };

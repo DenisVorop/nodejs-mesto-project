@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Card from "../models/Card";
 import mongoose from "mongoose";
 
@@ -13,7 +13,8 @@ export const getCards = async (req: Request, res: Response): Promise<void> => {
 
 export const createCard = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { name, link } = req.body;
@@ -22,20 +23,14 @@ export const createCard = async (
     const newCard = await Card.create({ name, link, owner });
     res.status(201).json(newCard);
   } catch (err) {
-    if (err instanceof mongoose.Error.ValidationError) {
-      res.status(400).json({
-        message: "Некорректные данные для создания карточки",
-        error: err.message,
-      });
-      return;
-    }
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
 export const deleteCard = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const cardId = req.params.cardId;
@@ -53,15 +48,15 @@ export const deleteCard = async (
 
     res.status(200).json({ message: "Карточка удалена" });
   } catch (err) {
-    if (err instanceof mongoose.Error.CastError) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
-export const likeCard = async (req: Request, res: Response): Promise<void> => {
+export const likeCard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const cardId = req.params.cardId;
 
@@ -83,17 +78,14 @@ export const likeCard = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(card);
   } catch (err) {
-    if (err instanceof mongoose.Error.CastError) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
 export const dislikeCard = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const cardId = req.params.cardId;
@@ -116,10 +108,6 @@ export const dislikeCard = async (
 
     res.status(200).json(card);
   } catch (err) {
-    if (err instanceof mongoose.Error.CastError) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
