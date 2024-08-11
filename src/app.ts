@@ -27,14 +27,6 @@ mongoose
 app.use(helmet());
 app.use(express.json());
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: new mongoose.Types.ObjectId("66b53268e87d9dac854633ac"),
-  };
-
-  next();
-});
-
 app.post("/signin", login);
 app.post("/signup", createUser);
 app.use("/", userRoutes);
