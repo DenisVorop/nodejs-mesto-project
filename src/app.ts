@@ -6,6 +6,7 @@ import helmet from "helmet";
 import userRoutes from "./routes/users";
 import cardRoutes from "./routes/cards";
 import { errorHandler } from "./middleware/error";
+import { createUser, login } from "controllers/users";
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+app.post("/signin", login);
+app.post("/signup", createUser);
 app.use("/", userRoutes);
 app.use("/", cardRoutes);
 
