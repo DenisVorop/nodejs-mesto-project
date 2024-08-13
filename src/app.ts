@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
 import userRoutes from "./routes/users";
 import cardRoutes from "./routes/cards";
@@ -27,6 +28,7 @@ mongoose
 
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(requestLogger);
 
