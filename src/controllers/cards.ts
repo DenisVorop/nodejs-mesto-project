@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Card from "../models/Card";
 import { NotFoundError } from "../utils/errors/NotFoundError";
 import { ForbiddenError } from "../utils/errors/ForbiddenError";
+import { IUser } from "models/User";
 
 export const getCards = async (
   req: Request,
@@ -46,7 +47,7 @@ export const deleteCard = async (
       return next(new NotFoundError("Карточка не найдена"));
     }
 
-    if (card.owner !== req.user._id) {
+    if (String((card.owner as IUser)._id) !== String(req.user._id._id)) {
       return next(new ForbiddenError("Вы не можете удалить чужую карточку"));
     }
 

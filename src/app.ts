@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/error";
 import { createUser, login } from "./controllers/users";
 import { errorLogger, requestLogger } from "./logger";
 import { NotFoundError } from "./utils/errors/NotFoundError";
+import { celebrate, Joi, Segments } from "celebrate";
 
 dotenv.config();
 
@@ -33,8 +34,29 @@ app.use(cookieParser());
 
 app.use(requestLogger);
 
-app.post("/signin", login);
-app.post("/signup", createUser);
+app.post(
+  "/signin",
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      email: Joi.string().email().required(),
+      password: Joi.string().min(6).required(),
+    }),
+  }),
+  login
+);
+app.post(
+  "/signup",
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      name: Joi.string().min(2).max(30),
+      about: Joi.string().min(2).max(200),
+      avatar: Joi.string().uri(),
+      email: Joi.string().email().required(),
+      password: Joi.string().min(6).required(),
+    }),
+  }),
+  createUser
+);
 app.use("/", userRoutes);
 app.use("/", cardRoutes);
 

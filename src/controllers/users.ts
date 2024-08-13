@@ -10,7 +10,7 @@ import { UnauthorizedError } from "../utils/errors/UnauthorizedError";
 
 dotenv.config();
 
-const { JWT_SECRET = "default-key", JWT_EXPIRES_IN = "7d" } = process.env;
+const { JWT_SECRET = "default_secret", JWT_EXPIRES_IN = "7d" } = process.env;
 
 export const getCurrentUser = async (
   req: Request,
@@ -43,11 +43,6 @@ export const login = async (
 ): Promise<void> => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ message: "Email и пароль обязательны" });
-      return;
-    }
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
@@ -96,11 +91,6 @@ export const getUserById = async (
 ): Promise<void> => {
   try {
     const userId = req.params.userId;
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(400).json({ message: "Некорректный _id пользователя" });
-      return;
-    }
 
     const user = await User.findById(userId);
     if (!user) {
