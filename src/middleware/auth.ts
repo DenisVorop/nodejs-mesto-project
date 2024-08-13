@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Types } from "mongoose";
+import { UnauthorizedError } from "../utils/errors/UnauthorizedError";
 
 dotenv.config();
 
@@ -12,8 +13,7 @@ const auth = (req: Request, res: Response, next: NextFunction): void => {
     req.cookies.jwt || req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    res.status(401).json({ message: "Необходима авторизация" });
-    return;
+    return next(new UnauthorizedError("Необходима авторизация"));
   }
 
   try {
@@ -24,7 +24,7 @@ const auth = (req: Request, res: Response, next: NextFunction): void => {
 
     next();
   } catch (err: unknown) {
-    res.status(401).json({ message: "Необходима авторизация" });
+    return next(new UnauthorizedError("Необходима авторизация"));
   }
 };
 

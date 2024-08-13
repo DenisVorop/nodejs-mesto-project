@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -9,6 +9,7 @@ import cardRoutes from "./routes/cards";
 import { errorHandler } from "./middleware/error";
 import { createUser, login } from "./controllers/users";
 import { errorLogger, requestLogger } from "./logger";
+import { NotFoundError } from "./utils/errors/NotFoundError";
 
 dotenv.config();
 
@@ -37,8 +38,8 @@ app.post("/signup", createUser);
 app.use("/", userRoutes);
 app.use("/", cardRoutes);
 
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ message: "Запрашиваемый ресурс не найден" });
+app.use("*", (req: Request, res: Response, next: NextFunction) => {
+  return next(new NotFoundError("Маршрут не найден"));
 });
 
 app.use(errorLogger);

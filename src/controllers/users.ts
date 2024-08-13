@@ -1,13 +1,16 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../models/User";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import jwt, { type Secret } from "jsonwebtoken";
 
+import User from "../models/User";
+import { NotFoundError } from "../utils/errors/NotFoundError";
+import { UnauthorizedError } from "../utils/errors/UnauthorizedError";
+
 dotenv.config();
 
-const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
+const { JWT_SECRET = "default-key", JWT_EXPIRES_IN = "7d" } = process.env;
 
 export const getCurrentUser = async (
   req: Request,
@@ -18,24 +21,18 @@ export const getCurrentUser = async (
     const userId = req.user?._id;
 
     if (!userId) {
-      res.status(401).json({ message: "Необходима авторизация" });
-      return;
+      return next(new UnauthorizedError("Необходима авторизация"));
     }
 
     const user = await User.findById(userId);
 
     if (!user) {
-      res.status(404).json({ message: "Пользователь не найден" });
-      return;
+      return next(new NotFoundError("Пользователь не найден"));
     }
 
     res.status(200).json(user);
   } catch (err: unknown) {
-    if (err instanceof mongoose.Error.CastError) {
-      res.status(400).json({ message: "Некорректный _id пользователя" });
-    } else {
-      next(err);
-    }
+    next(err);
   }
 };
 
@@ -54,14 +51,12 @@ export const login = async (
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      res.status(401).json({ message: "Неправильные почта или пароль" });
-      return;
+      return next(new UnauthorizedError("Неправильные почта или пароль"));
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      res.status(401).json({ message: "Неправильные почта или пароль" });
-      return;
+      return next(new UnauthorizedError("Неправильные почта или пароль"));
     }
 
     const token = jwt.sign({ _id: user._id }, JWT_SECRET as Secret, {
@@ -109,17 +104,12 @@ export const getUserById = async (
 
     const user = await User.findById(userId);
     if (!user) {
-      res.status(404).json({ message: "Пользователь не найден" });
-      return;
+      return next(new NotFoundError("Пользователь не найден"));
     }
 
     res.status(200).json(user);
   } catch (err) {
-    if (err instanceof mongoose.Error.CastError) {
-      res.status(400).json({ message: "Некорректный идентификатор" });
-    } else {
-      next(err);
-    }
+    next(err);
   }
 };
 
@@ -140,7 +130,10 @@ export const createUser = async (
       email,
       password: hashedPassword,
     });
-    res.status(201).json(newUser);
+
+    const { password: _, ...user } = newUser.toJSON();
+
+    res.status(201).json(user);
   } catch (err: any) {
     next(err);
   }
@@ -161,8 +154,7 @@ export const updateProfile = async (
     );
 
     if (!user) {
-      res.status(404).json({ message: "Пользователь не найден" });
-      return;
+      return next(new NotFoundError("Пользователь не найден"));
     }
 
     res.status(200).json(user);
@@ -186,8 +178,7 @@ export const updateAvatar = async (
     );
 
     if (!user) {
-      res.status(404).json({ message: "Пользователь не найден" });
-      return;
+      return next(new NotFoundError("Пользователь не найден"));
     }
 
     res.status(200).json(user);

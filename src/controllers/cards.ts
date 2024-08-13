@@ -1,13 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import Card from "../models/Card";
-import mongoose from "mongoose";
+import { NotFoundError } from "../utils/errors/NotFoundError";
+import { ForbiddenError } from "../utils/errors/ForbiddenError";
 
-export const getCards = async (req: Request, res: Response): Promise<void> => {
+export const getCards = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const cards = await Card.find({});
     res.status(200).json(cards);
   } catch (err) {
-    res.status(500).json({ message: "Непредвиденная ошибка сервера" });
+    next(err);
   }
 };
 
@@ -35,17 +40,17 @@ export const deleteCard = async (
   try {
     const cardId = req.params.cardId;
 
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
+    const card = await Card.findById(cardId).populate("owner");
 
-    const card = await Card.findByIdAndDelete(cardId);
     if (!card) {
-      res.status(404).json({ message: "Карточка не найдена" });
-      return;
+      return next(new NotFoundError("Карточка не найдена"));
     }
 
+    if (card.owner !== req.user._id) {
+      return next(new ForbiddenError("Вы не можете удалить чужую карточку"));
+    }
+
+    await card.deleteOne();
     res.status(200).json({ message: "Карточка удалена" });
   } catch (err) {
     next(err);
@@ -60,11 +65,6 @@ export const likeCard = async (
   try {
     const cardId = req.params.cardId;
 
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
-
     const card = await Card.findByIdAndUpdate(
       cardId,
       { $addToSet: { likes: req.user._id } },
@@ -72,8 +72,7 @@ export const likeCard = async (
     ).populate("owner");
 
     if (!card) {
-      res.status(404).json({ message: "Карточка не найдена" });
-      return;
+      return next(new NotFoundError("Карточка не найдена"));
     }
 
     res.status(200).json(card);
@@ -90,20 +89,14 @@ export const dislikeCard = async (
   try {
     const cardId = req.params.cardId;
 
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      res.status(400).json({ message: "Некорректный _id карточки" });
-      return;
-    }
-
     const card = await Card.findByIdAndUpdate(
       cardId,
-      { $pull: { likes: req.user._id } },
+      { $pull: { likes: req.user._id._id } },
       { new: true }
     ).populate("owner");
 
     if (!card) {
-      res.status(404).json({ message: "Карточка не найдена" });
-      return;
+      return next(new NotFoundError("Карточка не найдена"));
     }
 
     res.status(200).json(card);
