@@ -4,11 +4,16 @@
   "description": "Server for mesto project",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/app.ts",
+    "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "npx eslint src/**/*.ts"
+    "lint": "npx eslint src/**/*.ts",
+    "pm:start": "pm2 start ecosystem.config.js",
+    "pm:stop": "pm2 stop ecosystem.config.js",
+    "pm:restart": "pm2 restart ecosystem.config.js",
+    "pm:reload": "pm2 reload ecosystem.config.js",
+    "pm:delete": "pm2 delete ecosystem.config.js"
   },
   "author": "Denis Voropaev",
   "license": "ISC",
